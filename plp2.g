@@ -30,6 +30,52 @@ grammar plp2;
 
 		return espacios;
 	}
+	
+	private void mensajeErrorSemantico(int numero, Token t)
+	{
+		String msgErr = "Error ";
+
+		switch (numero)
+		{
+		    case 5:
+			msgErr += "5 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += t.getText() + "' ya existe en este ambito";
+			break;
+		    case 6:
+			msgErr += "6 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += t.getText() + "' no ha sido declarado";
+			break;
+		    case 7:
+			msgErr += "7 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += t.getText() + "' no es una variable";
+			break;
+		    case 8:
+			msgErr += "8 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += t.getText() + "' no es un metodo";
+			break;
+		    case 9:
+			msgErr += "9: 'main' no esta definido";
+			break;
+		}
+
+		System.err.println(msgErr);
+		System.exit(1);
+	}
+	
+	public void emitErrorMessage(String msg)
+	{
+	    System.err.println(msg);
+	    System.exit(1);
+	}
+}
+
+@lexer::members
+{
+	public void emitErrorMessage(String msg)
+	{
+	    System.err.println(msg);
+	    System.exit(1);
+	}
 }
 
 
@@ -43,7 +89,7 @@ prog
 	}
 	else
 	{
-		// Lanzar error 9
+		mensajeErrorSemantico(9,$EOF);
 	}
 };
 
@@ -62,6 +108,7 @@ returns [String trad]
 	if (ts.insertar($ID.text, Simbolo.Tipo.CLASE) == null)
     {
 		// Lanzar error 5
+		mensajeErrorSemantico(5,$ID);
     }
 } 
 LLAVEI
@@ -113,6 +160,7 @@ v [boolean atributo]
 	if (s == null)
 	{
 		// Lanzar error 5
+		mensajeErrorSemantico(5,$ID);
 	}
 }
 PYC
@@ -137,6 +185,7 @@ PYC
 	if (s == null)
 	{
 		// Lanzar error 5
+		mensajeErrorSemantico(5,$ID);
 	}
 }
 PYC
@@ -190,7 +239,8 @@ returns [String trad]
 {
 	if (ts.insertar($ID.text,Simbolo.Tipo.METODO) == null)
 	{
-		// Lanzar error 5 y stop
+		// Lanzar error 5
+		mensajeErrorSemantico(5,$ID);
 	}
 	
 	$trad = $ID.text;
@@ -199,7 +249,8 @@ returns [String trad]
 { 
 	if (ts.insertar("main",Simbolo.Tipo.METODO) == null)
 	{
-		// Lanzar error 5 y stop
+		// Lanzar error 5
+		mensajeErrorSemantico(5,$MAIN);
 	}
 	
 	mainFlag = true;
@@ -229,21 +280,23 @@ returns [String trad]
 	if (s == null)
 	{
 		// Lanzar error 6
+		mensajeErrorSemantico(6,$ID);
 	}
 	
 	s.setReferenciado(true);	
 } 
-asig[$ID.text,s.getTipo()] PYC { $trad = espacios() + $ID.text + " " + $asig.trad + ";\n"; };
+asig[$ID,s.getTipo()] PYC { $trad = espacios() + $ID.text + " " + $asig.trad + ";\n"; };
 
 
 
-asig [String id, Simbolo.Tipo tipo] 
+asig [Token id, Simbolo.Tipo tipo] 
 returns [String trad] 
 : 
 {
 	if ($tipo != Simbolo.Tipo.VARIABLE)
 	{
 		// Lanzar error 7
+		mensajeErrorSemantico(7,id);
 	}
 } 
 ASIG factor { $trad = "= " + $factor.trad; }
@@ -252,6 +305,7 @@ ASIG factor { $trad = "= " + $factor.trad; }
 	if ($tipo != Simbolo.Tipo.METODO)
 	{
 		// Lanzar error 8
+		mensajeErrorSemantico(8,id);
 	} 
 } 
 PARI PARD { $trad = "()"; };
@@ -269,10 +323,12 @@ returns [String trad]
 	if (s == null)
 	{
 		// Lanzar error 6
+		mensajeErrorSemantico(6,$ID);
 	}
 	else if (s.getTipo() != Simbolo.Tipo.VARIABLE)
 	{
 		// Lanzar error 7
+		mensajeErrorSemantico(7,$ID);
 	}
 	
 	s.setReferenciado(true);	
