@@ -7,23 +7,153 @@ grammar plp2;
 
 @member
 {
-	private TablaSimbolos ts;
-	boolean mainFlag;
+	private TablaSimbolos ts = new TablaSimbolos();
+	private boolean mainFlag = false;
+    
+    private ArrayList<String> bufferAtributos = new ArrayList<String>();
+    private HashMap<String, Simbolo> atributosSimbolos = new HashMap<String,Simbolo>();
+    private ArrayList<String> bufferMetodos = new ArrayList<String>();
+    private HashMap<String, Simbolo> metodosSimbolos = new HashMap<String,Simbolo>();
+    private ArrayList<String> bufferLocales = new ArrayList<String>();
+    private HashMap<String, Simbolo> localesSimbolos = new HashMap<String,Simbolo>();
+
+	private String espacios()
+	{
+		String espacios = "";
+
+		for (int i = 0; i < ts.getNivel(); i++)
+		{
+		    espacios += "    ";
+		}
+
+		return espacios;
+	}
 }
+
+
+
+prog 
+: s EOF
+{
+	if (mainFlag)
+	{
+		System.out.println($s.trad);
+	}
+	else
+	{
+		// Lanzar error 9
+	}
+};
+
+
 
 s 
 returns [String trad] 
-: c*;
+: (c { $trad = $trad + $c.trad })*;
+
+
 
 c 
 returns [String trad] 
-: CLASS ID LLAVEI d LLAVED;
+: CLASS ID
+{
+	if (ts.insertar($ID.text, Simbolo.Tipo.CLASE) == null)
+    {
+		// Lanzar error 5
+    }
+} 
+LLAVEI
+{
+	ts = new TablaSimbolos(ts);
+    
+    bufferAtributos.clear();
+    atributosSimbolos.clear();
+    bufferMetodos.clear();
+    metodosSimbolos.clear();
+} 
+d LLAVED
+{
+	ts = ts.restaurar();
+    String cStr = espacios() + "class " + id.getLexema() + " {\n";
+
+    for (String s : bufferAtributos)
+    {
+		if (atributosSimbolos.get(s).isReferenciado())
+		{
+		    cStr += s;
+		}
+    }
+
+    for (String s : bufferMetodos)
+    {
+		if (metodosSimbolos.get(s).isReferenciado() ||
+		    metodosSimbolos.get(s).getNombre().equals("main"))
+		{
+		    cStr += s;
+		}
+    }
+
+    $trad = cStr + espacios() + "}\n";
+};
+
+
 
 d 
-: (v | m)*;
+: (v[true] | m)*;
+
+
 
 v [boolean atributo]
-: DOUBLE ID PYC | INT ID PYC;
+: DOUBLE ID 
+{
+	Simbolo s = ts.insertar($ID.text, Simbolo.Tipo.VARIABLE);
+	
+	if (s == null)
+	{
+		// Lanzar error 5
+	}
+}
+PYC
+{
+	String vStr = espacios() + "double " + $ID.text + ";\n";
+	
+	if (atributo)
+	{
+		bufferAtributos.add(vStr);
+		atributosSimbolos.put(vStr,s);
+	}
+	else
+	{
+		bufferLocales.add(vStr);
+		localesSimbolos.put(vStr,s);
+	}
+} 
+| INT ID
+{
+	Simbolo s = ts.insertar($ID.text, Simbolo.Tipo.VARIABLE);
+	
+	if (s == null)
+	{
+		// Lanzar error 5
+	}
+}
+PYC
+{
+	String vStr = espacios() + "int " + $ID.text + ";\n";
+	
+	if (atributo)
+	{
+		bufferAtributos.add(vStr);
+		atributosSimbolos.put(vStr,s);
+	}
+	else
+	{
+		bufferLocales.add(vStr);
+		localesSimbolos.put(vStr,s);
+	}	
+};
+
+
 
 m 
 : VOID mid PARI PARD LLAVEI
@@ -50,13 +180,15 @@ decl cuerpo LLAVED
 	metodosSimbolos.put(mStr,ts.buscar($mid.trad));	
 };
 
+
+
 mid
 returns [String trad] 
 : ID 
 {
 	if (ts.insertar($ID.text,Simbolo.Tipo.METODO) == null)
 	{
-		// Lanzar error 5
+		// Lanzar error 5 y stop
 	}
 	
 	$trad = $ID.text;
@@ -65,20 +197,26 @@ returns [String trad]
 { 
 	if (ts.insertar("main",Simbolo.Tipo.METODO) == null)
 	{
-		// Lanzar error 5
+		// Lanzar error 5 y stop
 	}
 	
 	mainFlag = true;
 	
-	$trad = "main" ;
+	$trad = "main";
 };
+
+
 
 decl 
 : (v[false])*;
 
+
+
 cuerpo
 returns [String trad] 
 : (instr { $trad = $trad + $instr.trad; })*;
+
+
 
 instr 
 returns [String trad] 
@@ -91,10 +229,11 @@ returns [String trad]
 		// Lanzar error 6
 	}
 	
-	s.setReferenciado(true);
-	
+	s.setReferenciado(true);	
 } 
 asig[$ID.text,s.getTipo()] PYC { $trad = espacios() + $ID.text + " " + $asig.trad + ";\n"; };
+
+
 
 asig [String id, Simbolo.Tipo tipo] 
 returns [String trad] 
@@ -114,6 +253,8 @@ ASIG factor { $trad = "= " + $factor.trad; }
 	} 
 } 
 PARI PARD { $trad = "()"; };
+
+
 
 factor 
 returns [String trad] 
@@ -135,9 +276,6 @@ returns [String trad]
 	s.setReferenciado(true);	
 	$trad = $ID.text;
 };
-
-
-
 
 
 
