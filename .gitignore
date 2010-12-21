@@ -4,3 +4,4 @@ ignore
 plp2Lexer.java
 plp2Parser.java
 plp2.tokens
+.bashrc

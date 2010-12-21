@@ -3,9 +3,11 @@ grammar plp2;
 @header
 {
 	import java.lang.String;
+	import java.util.ArrayList;
+	import java.util.HashMap;
 }
 
-@member
+@members
 {
 	private TablaSimbolos ts = new TablaSimbolos();
 	private boolean mainFlag = false;
@@ -49,7 +51,7 @@ prog
 
 s 
 returns [String trad] 
-: (c { $trad = $trad + $c.trad })*;
+: (c { $trad = $trad + $c.trad; })*;
 
 
 
@@ -74,7 +76,7 @@ LLAVEI
 d LLAVED
 {
 	ts = ts.restaurar();
-    String cStr = espacios() + "class " + id.getLexema() + " {\n";
+    String cStr = espacios() + "class " + $ID.text + " {\n";
 
     for (String s : bufferAtributos)
     {
@@ -159,7 +161,7 @@ m
 : VOID mid PARI PARD LLAVEI
 {
 	ts = new TablaSimbolos(ts);
-	bufferesLocales.clear();
+	bufferLocales.clear();
 	localesSimbolos.clear();
 } 
 decl cuerpo LLAVED

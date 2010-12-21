@@ -1,32 +1,13 @@
+import org.antlr.runtime.*;
 
-/**
- *
- * @author david
- */
 public class Main
 {
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args)
-    {
-	String filename = args[0];
-
-	/*
-	AnalizadorLexico al = new AnalizadorLexico(filename);
-	Token t = al.siguienteToken();
-
-	while (t != null && t.getTipo() != Token.Tipo.EOF)
+	public static void main(String[] args) throws Exception
 	{
-	    System.out.println(t);
-
-	    t = al.siguienteToken();
+		CharStream input = new ANTLRFileStream(args[0]);
+		plp2Lexer lex = new plp2Lexer(input);
+		CommonTokenStream tokens = new CommonTokenStream(lex);
+		plp2Parser parser = new plp2Parser(tokens);
+		parser.prog();
 	}
-	*/
-
-	AnalizadorSintactico as = new AnalizadorSintactico();
-
-	as.analisisDescendenteRecursivo(filename);
-    }
-
 }
