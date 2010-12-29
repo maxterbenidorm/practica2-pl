@@ -38,19 +38,19 @@ grammar plp2;
 		switch (numero)
 		{
 		    case 5:
-			msgErr += "5 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += "5 (" + t.getLine() + "," + (t.getCharPositionInLine() + 1) + "): '";
 			msgErr += t.getText() + "' ya existe en este ambito";
 			break;
 		    case 6:
-			msgErr += "6 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += "6 (" + t.getLine() + "," + (t.getCharPositionInLine() + 1) + "): '";
 			msgErr += t.getText() + "' no ha sido declarado";
 			break;
 		    case 7:
-			msgErr += "7 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += "7 (" + t.getLine() + "," + (t.getCharPositionInLine() + 1) + "): '";
 			msgErr += t.getText() + "' no es una variable";
 			break;
 		    case 8:
-			msgErr += "8 (" + t.getLine() + "," + t.getCharPositionInLine() + "): '";
+			msgErr += "8 (" + t.getLine() + "," + (t.getCharPositionInLine() + 1) + "): '";
 			msgErr += t.getText() + "' no es un metodo";
 			break;
 		    case 9:
@@ -96,7 +96,11 @@ prog
 
 
 s 
-returns [String trad] 
+returns [String trad]
+@init
+{
+	$trad = "";
+} 
 : (c { $trad = $trad + $c.trad; })*;
 
 
@@ -107,7 +111,6 @@ returns [String trad]
 {
 	if (ts.insertar($ID.text, Simbolo.Tipo.CLASE) == null)
     {
-		// Lanzar error 5
 		mensajeErrorSemantico(5,$ID);
     }
 } 
@@ -184,7 +187,6 @@ PYC
 	
 	if (s == null)
 	{
-		// Lanzar error 5
 		mensajeErrorSemantico(5,$ID);
 	}
 }
@@ -239,7 +241,6 @@ returns [String trad]
 {
 	if (ts.insertar($ID.text,Simbolo.Tipo.METODO) == null)
 	{
-		// Lanzar error 5
 		mensajeErrorSemantico(5,$ID);
 	}
 	
@@ -249,7 +250,6 @@ returns [String trad]
 { 
 	if (ts.insertar("main",Simbolo.Tipo.METODO) == null)
 	{
-		// Lanzar error 5
 		mensajeErrorSemantico(5,$MAIN);
 	}
 	
@@ -267,6 +267,10 @@ decl
 
 cuerpo
 returns [String trad] 
+@init
+{
+	$trad = "";
+}
 : (instr { $trad = $trad + $instr.trad; })*;
 
 
@@ -279,7 +283,6 @@ returns [String trad]
 	
 	if (s == null)
 	{
-		// Lanzar error 6
 		mensajeErrorSemantico(6,$ID);
 	}
 	
@@ -295,7 +298,6 @@ returns [String trad]
 {
 	if ($tipo != Simbolo.Tipo.VARIABLE)
 	{
-		// Lanzar error 7
 		mensajeErrorSemantico(7,id);
 	}
 } 
@@ -304,7 +306,6 @@ ASIG factor { $trad = "= " + $factor.trad; }
 { 
 	if ($tipo != Simbolo.Tipo.METODO)
 	{
-		// Lanzar error 8
 		mensajeErrorSemantico(8,id);
 	} 
 } 
